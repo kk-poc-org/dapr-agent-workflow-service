@@ -1,0 +1,127 @@
+plugins {
+    id 'org.springframework.boot' version '3.5.7'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+}
+
+group = "com.hdfcbank"
+version = "1.0.0"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    // Add Maven repository for Dapr dependencies if needed
+    maven {
+        url 'https://repo1.maven.org/maven2'
+    }
+}
+
+ext {
+    set('daprVersion', '1.16.0')
+    set('azureDurableTaskVersion', '1.0.0-beta.1')
+}
+
+dependencies {
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // Dapr SDK - Core
+    implementation "io.dapr:dapr-sdk:${daprVersion}"
+    implementation "io.dapr:dapr-sdk-springboot:${daprVersion}"
+
+    // Dapr Workflow SDK (Note: As of Jan 2024, Dapr Workflow is in preview)
+    // Option 1: Use the workflow module from Dapr SDK
+    implementation "io.dapr:dapr-sdk-workflows:${daprVersion}"
+
+    // Option 2: If you need Azure Durable Task Framework
+    // implementation "com.microsoft.durabletask:durabletask-sdk:${azureDurableTaskVersion}"
+
+    // For Dapr Workflows, you might also need
+    implementation 'io.dapr:dapr-sdk-autogen:1.16.0'
+
+    // JSON Processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+
+    // Reactive
+    implementation 'io.projectreactor:reactor-core'
+
+    // Virtual Threads (Java 21)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Utilities
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'commons-io:commons-io:2.15.1'
+
+    // Logging
+    implementation 'ch.qos.logback:logback-classic'
+
+    // Observability
+    implementation 'io.micrometer:micrometer-core'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.awaitility:awaitility:4.2.0'
+}
+
+// Enable preview features for Java 21
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['--enable-preview', '-parameters']
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    jvmArgs += ['--enable-preview', '-XX:+EnableDynamicAgentLoading']
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs += ['--enable-preview', '-XX:+EnableDynamicAgentLoading']
+}
+
+// For Spring Boot 3.x with Java 21
+tasks.named('bootRun') {
+    jvmArgs += ['--enable-preview', '-XX:+EnableDynamicAgentLoading']
+}
+
+// Build info
+springBoot {
+    buildInfo()
+}
+
+// Jar configuration
+bootJar {
+    archiveFileName = "${project.name}.jar"
+    launchScript()
+}
+
+jar {
+    enabled = false
+}
