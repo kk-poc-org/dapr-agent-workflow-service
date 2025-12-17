@@ -2,15 +2,16 @@ spring:
   application:
     name: dapr-workflow-spring
 
-  # Spring AI - Ollama Configuration (Local LLM)
+  # Spring AI - Google Gemini Configuration (FREE)
+  # Get your API key from: https://aistudio.google.com/apikey
   ai:
-    ollama:
-      base-url: http://localhost:11434
+    openai:
+      api-key: ${GROQ_API_KEY:your-groq-api-key-here}
+      base-url: https://api.groq.com/openai
       chat:
         options:
-          model: qwen2.5:3b
+          model: llama-3.3-70b-versatile
           temperature: 0.7
-          num-ctx: 4096
 
 # Dapr Workflow Configuration
 dapr:

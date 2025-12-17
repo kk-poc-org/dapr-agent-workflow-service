@@ -79,8 +79,8 @@ dependencies {
     // Logging
     implementation 'ch.qos.logback:logback-classic'
 
-    // Spring AI - Ollama (Local LLM)
-    implementation "org.springframework.ai:spring-ai-ollama-spring-boot-starter:${springAiVersion}"
+    // Spring AI - OpenAI compatible (works with Groq, OpenAI, etc.)
+    implementation "org.springframework.ai:spring-ai-openai-spring-boot-starter:${springAiVersion}"
 
     // Observability
     implementation 'io.micrometer:micrometer-core'

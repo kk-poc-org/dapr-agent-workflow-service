@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * Test controller to verify Ollama LLM connection.
+ * Test controller to verify LLM connection.
  *
- * Prerequisites:
- * 1. Install Ollama: https://ollama.com/download/windows
- * 2. Pull model: ollama pull qwen2.5:3b
- * 3. Ollama runs automatically on http://localhost:11434
+ * Current Configuration: Groq (FREE)
+ * - Get API key from: https://console.groq.com/keys
+ * - Model: llama-3.3-70b-versatile
+ * - Free tier: 30 requests/minute
  */
 @RestController
 @RequestMapping("/api/llm")
@@ -43,7 +43,7 @@ public class LLMTestController {
             long startTime = System.currentTimeMillis();
 
             String response = chatClient.prompt()
-                .user("Say 'Hello! Ollama is working!' in exactly those words.")
+                .user("Say 'Hello! Groq LLM is working!' in exactly those words.")
                 .call()
                 .content();
 
@@ -53,7 +53,7 @@ public class LLMTestController {
 
             return ResponseEntity.ok(Map.of(
                 "status", "SUCCESS",
-                "model", "qwen2.5:3b",
+                "model", "llama-3.3-70b-versatile (Groq)",
                 "response", response
             ));
         } catch (Exception e) {
@@ -61,7 +61,7 @@ public class LLMTestController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "status", "ERROR",
                 "message", e.getMessage(),
-                "hint", "Make sure Ollama is running: ollama serve"
+                "hint", "Check your Groq API key"
             ));
         }
     }
@@ -107,7 +107,7 @@ public class LLMTestController {
 
             return ResponseEntity.ok(Map.of(
                 "status", "SUCCESS",
-                "model", "qwen2.5:3b",
+                "model", "llama-3.3-70b-versatile (Groq)",
                 "analysis", response
             ));
         } catch (Exception e) {
@@ -161,7 +161,7 @@ public class LLMTestController {
 
             return ResponseEntity.ok(Map.of(
                 "status", "SUCCESS",
-                "model", "qwen2.5:3b",
+                "model", "llama-3.3-70b-versatile (Groq)",
                 "ask-anything", userQuery,
                 "response", response
             ));
