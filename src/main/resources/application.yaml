@@ -2,7 +2,27 @@ spring:
   application:
     name: dapr-workflow-spring
 
+  # Spring AI - Ollama Configuration (Local LLM)
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen2.5:3b
+          temperature: 0.7
+          num-ctx: 4096
+
 # Dapr Workflow Configuration
 dapr:
   workflow:
     enabled: true
+
+# Server Configuration
+server:
+  port: 8081
+
+# Logging
+logging:
+  level:
+    org.springframework.ai: DEBUG
+    com.hdfcbank: DEBUG

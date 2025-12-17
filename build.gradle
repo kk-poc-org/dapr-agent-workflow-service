@@ -24,11 +24,16 @@ repositories {
     maven {
         url 'https://repo1.maven.org/maven2'
     }
+    // Spring AI Milestone Repository
+    maven {
+        url 'https://repo.spring.io/milestone'
+    }
 }
 
 ext {
     set('daprVersion', '1.16.0')
     set('azureDurableTaskVersion', '1.0.0-beta.1')
+    set('springAiVersion', '1.0.0-M4')
 }
 
 dependencies {
@@ -73,6 +78,9 @@ dependencies {
 
     // Logging
     implementation 'ch.qos.logback:logback-classic'
+
+    // Spring AI - Ollama (Local LLM)
+    implementation "org.springframework.ai:spring-ai-ollama-spring-boot-starter:${springAiVersion}"
 
     // Observability
     implementation 'io.micrometer:micrometer-core'
