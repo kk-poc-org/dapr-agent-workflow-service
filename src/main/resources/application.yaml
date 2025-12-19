@@ -2,8 +2,8 @@ spring:
   application:
     name: dapr-workflow-spring
 
-  # Spring AI - Google Gemini Configuration (FREE)
-  # Get your API key from: https://aistudio.google.com/apikey
+  # Spring AI - Groq LLM Configuration
+  # Set GROQ_API_KEY environment variable with your API key from: https://console.groq.com/keys
   ai:
     openai:
       api-key: ${GROQ_API_KEY:your-groq-api-key-here}

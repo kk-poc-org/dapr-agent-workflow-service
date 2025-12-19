@@ -1,0 +1,78 @@
+{
+  "info": {
+    "name": "Dapr AI Loan Workflow - TRUE AI Agents",
+    "description": "Home Loan AI Agent Workflow with Dapr + Spring AI + Groq LLM. Features ReAct Pattern, 6 Agent Tools, Memory and Reasoning Trace.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8081"},
+    {"key": "instanceId", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Test Scenarios",
+      "item": [
+        {
+          "name": "1. APPROVED - Excellent Applicant",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Rahul Sharma\",\n  \"panNumber\": \"BSRPS1234K\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 2400000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 780,\n  \"existingEmi\": 10000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Tata Consultancy Services\",\n  \"yearsOfExperience\": 8,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 8000000,\n  \"propertyLocation\": \"Mumbai\"\n}"},
+            "url": "{{baseUrl}}/api/loan/apply",
+            "description": "EXPECTED: APPROVED. Credit:780, Income:24LPA, Loan:50L, LTV:62.5%, DTI:Low"
+          }
+        },
+        {
+          "name": "2. REJECTED - Poor Credit",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Vikram Singh\",\n  \"panNumber\": \"AVSPS5678M\",\n  \"aadhaarNumber\": \"567890123458\",\n  \"annualIncome\": 600000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 520,\n  \"existingEmi\": 25000,\n  \"employmentType\": \"SELF_EMPLOYED\",\n  \"employerName\": \"Self\",\n  \"yearsOfExperience\": 2,\n  \"propertyType\": \"PLOT\",\n  \"propertyValue\": 4500000,\n  \"propertyLocation\": \"Tier3City\"\n}"},
+            "url": "{{baseUrl}}/api/loan/apply",
+            "description": "EXPECTED: REJECTED. Credit:520 (POOR), Income:6LPA, LTV:111%, High DTI, Self-employed"
+          }
+        },
+        {
+          "name": "3. MANUAL_REVIEW - Borderline",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Anita Desai\",\n  \"panNumber\": \"CADPD9012L\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 1200000,\n  \"requestedLoanAmount\": 4000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 680,\n  \"existingEmi\": 20000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Startup Inc\",\n  \"yearsOfExperience\": 4,\n  \"propertyType\": \"VILLA\",\n  \"propertyValue\": 5500000,\n  \"propertyLocation\": \"Pune\"\n}"},
+            "url": "{{baseUrl}}/api/loan/apply",
+            "description": "EXPECTED: MANUAL_REVIEW. Credit:680 (FAIR after bureau variance), Income:12LPA, LTV:73%, Moderate DTI"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workflow Operations",
+      "item": [
+        {
+          "name": "Get Workflow Status",
+          "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/loan/status/{{instanceId}}"}
+        },
+        {
+          "name": "Wait for Completion",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.result) { console.log('Decision: ' + jsonData.result.finalDecision); }"]}}],
+          "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/loan/wait/{{instanceId}}?timeoutSeconds=120", "host": ["{{baseUrl}}"], "path": ["api", "loan", "wait", "{{instanceId}}"], "query": [{"key": "timeoutSeconds", "value": "120"}]}}
+        },
+        {
+          "name": "Submit Sample",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
+          "request": {"method": "POST", "header": [], "url": "{{baseUrl}}/api/loan/sample"}
+        }
+      ]
+    },
+    {
+      "name": "LLM Testing",
+      "item": [
+        {"name": "Test LLM", "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/llm/test"}},
+        {"name": "Chat", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"message\": \"What are key factors for home loan approval?\"}"}, "url": "{{baseUrl}}/api/llm/chat"}}
+      ]
+    }
+  ]
+}
+
