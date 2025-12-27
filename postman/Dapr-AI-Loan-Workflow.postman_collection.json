@@ -1,76 +1,349 @@
 {
   "info": {
-    "name": "Dapr AI Loan Workflow - TRUE AI Agents",
-    "description": "Home Loan AI Agent Workflow with Dapr + Spring AI + Groq LLM. Features ReAct Pattern, 6 Agent Tools, Memory and Reasoning Trace.",
+    "name": "Dapr AI Loan Workflow - Complete API Collection",
+    "description": "Comprehensive API collection for Home Loan AI Agent Service.\n\n## Architecture\n- Spring Boot 3.5 + Spring AI + Groq LLM (llama-3.3-70b)\n- Dapr for service invocation, workflows, and state management\n- 6 AI Tools: PAN, Aadhaar, Credit, Income, Fraud, Property\n- ReAct Pattern for autonomous decision making\n\n## Endpoints Overview\n1. **Agentic Processing** - LLM autonomously decides tools and makes decisions\n2. **Dapr Workflow** - Orchestrated multi-agent workflow\n3. **LLM Testing** - Direct LLM interaction\n4. **Health & Diagnostics** - Service health checks\n\n## How to Run\n```bash\n# Start mock services\ncd banking-mock-services && dapr run -f dapr.yaml\n\n# Start agent service\ndapr run --app-id loan-agent-service --app-port 8081 --dapr-http-port 3500 --resources-path ./dapr/components -- .\\gradlew.bat bootRun\n```",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {"key": "baseUrl", "value": "http://localhost:8081"},
-    {"key": "instanceId", "value": ""}
+    {"key": "baseUrl", "value": "http://localhost:8081", "description": "Direct application URL"},
+    {"key": "daprUrl", "value": "http://localhost:3500", "description": "Dapr sidecar URL"},
+    {"key": "appId", "value": "loan-agent-service", "description": "Dapr App ID"},
+    {"key": "instanceId", "value": "", "description": "Workflow instance ID (auto-populated)"}
   ],
   "item": [
     {
-      "name": "Test Scenarios",
+      "name": "🤖 1. Agentic Loan Processing (Direct API)",
+      "description": "Direct API calls to the Autonomous Loan Agent.\nThe LLM autonomously decides which tools to call and makes the final decision.\n\n**Endpoint:** POST /api/loan/apply/agentic\n**Alternative:** POST /api/autonomous/process",
       "item": [
         {
-          "name": "1. APPROVED - Excellent Applicant",
-          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
+          "name": "1.1 Excellent Applicant - Should APPROVE",
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Rahul Sharma\",\n  \"panNumber\": \"BSRPS1234K\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 2400000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 780,\n  \"existingEmi\": 10000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Tata Consultancy Services\",\n  \"yearsOfExperience\": 8,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 8000000,\n  \"propertyLocation\": \"Mumbai\"\n}"},
-            "url": "{{baseUrl}}/api/loan/apply",
-            "description": "EXPECTED: APPROVED. Credit:780, Income:24LPA, Loan:50L, LTV:62.5%, DTI:Low"
+            "url": "{{baseUrl}}/api/loan/apply/agentic",
+            "description": "**EXPECTED: APPROVED**\n\n✅ Valid Aadhaar (499118665246 passes Verhoeff checksum)\n✅ Credit Score: 780 (Excellent)\n✅ Income: ₹24 LPA\n✅ LTV: 62.5% (Good)\n✅ DTI: Low\n✅ Employment: 8 years at TCS"
           }
         },
         {
-          "name": "2. REJECTED - Poor Credit",
-          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
+          "name": "1.2 Poor Credit Applicant - Should REJECT",
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Vikram Singh\",\n  \"panNumber\": \"AVSPS5678M\",\n  \"aadhaarNumber\": \"567890123458\",\n  \"annualIncome\": 600000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 520,\n  \"existingEmi\": 25000,\n  \"employmentType\": \"SELF_EMPLOYED\",\n  \"employerName\": \"Self\",\n  \"yearsOfExperience\": 2,\n  \"propertyType\": \"PLOT\",\n  \"propertyValue\": 4500000,\n  \"propertyLocation\": \"Tier3City\"\n}"},
-            "url": "{{baseUrl}}/api/loan/apply",
-            "description": "EXPECTED: REJECTED. Credit:520 (POOR), Income:6LPA, LTV:111%, High DTI, Self-employed"
+            "url": "{{baseUrl}}/api/loan/apply/agentic",
+            "description": "**EXPECTED: REJECTED**\n\n❌ Invalid Aadhaar (567890123458 fails Verhoeff checksum)\n❌ Credit Score: 520 (Poor)\n❌ Income: ₹6 LPA (Low for ₹50L loan)\n❌ High DTI with existing EMI ₹25K\n❌ Self-employed with only 2 years experience"
           }
         },
         {
-          "name": "3. MANUAL_REVIEW - Borderline",
-          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
+          "name": "1.3 Invalid Aadhaar - Should REJECT",
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Anita Desai\",\n  \"panNumber\": \"CADPD9012L\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 1200000,\n  \"requestedLoanAmount\": 4000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 680,\n  \"existingEmi\": 20000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Startup Inc\",\n  \"yearsOfExperience\": 4,\n  \"propertyType\": \"VILLA\",\n  \"propertyValue\": 5500000,\n  \"propertyLocation\": \"Pune\"\n}"},
-            "url": "{{baseUrl}}/api/loan/apply",
-            "description": "EXPECTED: MANUAL_REVIEW. Credit:680 (FAIR after bureau variance), Income:12LPA, LTV:73%, Moderate DTI"
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Amit Kumar\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"aadhaarNumber\": \"234567890123\",\n  \"annualIncome\": 1500000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 750,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Infosys\",\n  \"yearsOfExperience\": 10,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 7500000,\n  \"propertyLocation\": \"Mumbai\"\n}"},
+            "url": "{{baseUrl}}/api/loan/apply/agentic",
+            "description": "**EXPECTED: REJECTED**\n\n❌ Invalid Aadhaar (234567890123 fails Verhoeff checksum)\n✅ Other factors are good but invalid Aadhaar is a deal-breaker"
+          }
+        },
+        {
+          "name": "1.4 Borderline Case - May MANUAL_REVIEW",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Priya Patel\",\n  \"panNumber\": \"BXYPK5678M\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 1800000,\n  \"requestedLoanAmount\": 7500000,\n  \"loanTenureYears\": 25,\n  \"creditScore\": 680,\n  \"existingEmi\": 20000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Wipro\",\n  \"yearsOfExperience\": 5,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 10000000,\n  \"propertyLocation\": \"Pune\"\n}"},
+            "url": "{{baseUrl}}/api/loan/apply/agentic",
+            "description": "**EXPECTED: MANUAL_REVIEW or CONDITIONAL_APPROVAL**\n\n✅ Valid Aadhaar\n⚠️ Credit Score: 680 (Fair - borderline)\n⚠️ High loan amount relative to income\n⚠️ Existing EMI ₹20K\n✅ 5 years experience"
+          }
+        },
+        {
+          "name": "1.5 High Net Worth - Should APPROVE",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Sunita Reddy\",\n  \"panNumber\": \"CXYPR9876L\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 5000000,\n  \"requestedLoanAmount\": 10000000,\n  \"loanTenureYears\": 15,\n  \"creditScore\": 820,\n  \"existingEmi\": 0,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Google India\",\n  \"yearsOfExperience\": 12,\n  \"propertyType\": \"VILLA\",\n  \"propertyValue\": 20000000,\n  \"propertyLocation\": \"Bangalore\"\n}"},
+            "url": "{{baseUrl}}/api/loan/apply/agentic",
+            "description": "**EXPECTED: APPROVED**\n\n✅ Valid Aadhaar\n✅ Credit Score: 820 (Exceptional)\n✅ Income: ₹50 LPA\n✅ LTV: 50% (Excellent)\n✅ No existing EMI\n✅ 12 years at Google"
+          }
+        },
+        {
+          "name": "1.6 Process Sample Application",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/autonomous/process/sample",
+            "description": "Process a pre-configured sample application for quick testing."
+          }
+        },
+        {
+          "name": "1.7 Agent Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/autonomous/health",
+            "description": "Check if the autonomous agent is healthy and ready."
           }
         }
       ]
     },
     {
-      "name": "Workflow Operations",
+      "name": "🔗 2. Agentic Processing (Via Dapr)",
+      "description": "Same agentic endpoints called through Dapr service invocation.\nUse these when calling from another Dapr-enabled service.\n\n**Pattern:** {{daprUrl}}/v1.0/invoke/{{appId}}/method/...",
       "item": [
         {
-          "name": "Get Workflow Status",
-          "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/loan/status/{{instanceId}}"}
+          "name": "2.1 Excellent Applicant via Dapr",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Rahul Sharma\",\n  \"panNumber\": \"BSRPS1234K\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 2400000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 780,\n  \"existingEmi\": 10000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"TCS\",\n  \"yearsOfExperience\": 8,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 8000000,\n  \"propertyLocation\": \"Mumbai\"\n}"},
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/loan/apply/agentic",
+            "description": "Call agentic endpoint via Dapr service invocation.\nEnables: Service discovery, retries, observability, mTLS."
+          }
         },
         {
-          "name": "Wait for Completion",
-          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.result) { console.log('Decision: ' + jsonData.result.finalDecision); }"]}}],
-          "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/loan/wait/{{instanceId}}?timeoutSeconds=120", "host": ["{{baseUrl}}"], "path": ["api", "loan", "wait", "{{instanceId}}"], "query": [{"key": "timeoutSeconds", "value": "120"}]}}
+          "name": "2.2 Poor Credit via Dapr",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Vikram Singh\",\n  \"panNumber\": \"AVSPS5678M\",\n  \"aadhaarNumber\": \"567890123458\",\n  \"annualIncome\": 600000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 520,\n  \"existingEmi\": 25000,\n  \"employmentType\": \"SELF_EMPLOYED\",\n  \"employerName\": \"Self\",\n  \"yearsOfExperience\": 2,\n  \"propertyType\": \"PLOT\",\n  \"propertyValue\": 4500000,\n  \"propertyLocation\": \"Tier3City\"\n}"},
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/loan/apply/agentic",
+            "description": "Poor credit applicant via Dapr - Expected: REJECTED"
+          }
         },
         {
-          "name": "Submit Sample",
-          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.collectionVariables.set('instanceId', jsonData.instanceId);"]}}],
-          "request": {"method": "POST", "header": [], "url": "{{baseUrl}}/api/loan/sample"}
+          "name": "2.3 Alternative Endpoint via Dapr",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Test User\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 2000000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 750,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Accenture\",\n  \"yearsOfExperience\": 6,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 8000000,\n  \"propertyLocation\": \"Delhi\"\n}"},
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/autonomous/process",
+            "description": "Alternative /api/autonomous/process endpoint via Dapr"
+          }
+        },
+        {
+          "name": "2.4 Sample Application via Dapr",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/autonomous/process/sample",
+            "description": "Process sample application via Dapr"
+          }
         }
       ]
     },
     {
-      "name": "LLM Testing",
+      "name": "📋 3. Dapr Workflow (Direct API)",
+      "description": "Dapr Workflow orchestrating multiple AI agents.\nWorkflow activities: DocumentVerification → CreditCheck → Eligibility → Approval",
       "item": [
-        {"name": "Test LLM", "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/llm/test"}},
-        {"name": "Chat", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"message\": \"What are key factors for home loan approval?\"}"}, "url": "{{baseUrl}}/api/llm/chat"}}
+        {
+          "name": "3.1 Submit Loan Application",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.instanceId) { pm.collectionVariables.set('instanceId', jsonData.instanceId); }"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Rahul Sharma\",\n  \"panNumber\": \"BSRPS1234K\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 2400000,\n  \"requestedLoanAmount\": 5000000,\n  \"loanTenureYears\": 20,\n  \"creditScore\": 780,\n  \"existingEmi\": 10000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"TCS\",\n  \"yearsOfExperience\": 8,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 8000000,\n  \"propertyLocation\": \"Mumbai\"\n}"},
+            "url": "{{baseUrl}}/api/loan/apply",
+            "description": "Start Dapr Workflow with 4 AI Agent activities.\nReturns instanceId for tracking."
+          }
+        },
+        {
+          "name": "3.2 Get Workflow Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/loan/status/{{instanceId}}",
+            "description": "Get current status of the workflow.\nStates: RUNNING, COMPLETED, FAILED, SUSPENDED"
+          }
+        },
+        {
+          "name": "3.3 Wait for Completion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/loan/wait/{{instanceId}}?timeoutSeconds=120",
+            "description": "Wait for workflow to complete (blocking call).\nTimeout: 120 seconds"
+          }
+        },
+        {
+          "name": "3.4 Submit Sample Application",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.instanceId) { pm.collectionVariables.set('instanceId', jsonData.instanceId); }"]}}],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/loan/sample",
+            "description": "Submit a pre-configured sample application"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 4. Dapr Workflow (Via Dapr)",
+      "description": "Dapr Workflow endpoints called through Dapr service invocation.",
+      "item": [
+        {
+          "name": "4.1 Submit Application via Dapr",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.instanceId) { pm.collectionVariables.set('instanceId', jsonData.instanceId); }"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"applicantName\": \"Priya Patel\",\n  \"panNumber\": \"BXYPK5678M\",\n  \"aadhaarNumber\": \"499118665246\",\n  \"annualIncome\": 3000000,\n  \"requestedLoanAmount\": 6000000,\n  \"loanTenureYears\": 15,\n  \"creditScore\": 760,\n  \"existingEmi\": 5000,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Infosys\",\n  \"yearsOfExperience\": 10,\n  \"propertyType\": \"APARTMENT\",\n  \"propertyValue\": 9000000,\n  \"propertyLocation\": \"Bangalore\"\n}"},
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/loan/apply",
+            "description": "Submit loan application via Dapr service invocation"
+          }
+        },
+        {
+          "name": "4.2 Get Status via Dapr",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/loan/status/{{instanceId}}",
+            "description": "Get workflow status via Dapr"
+          }
+        },
+        {
+          "name": "4.3 Wait for Completion via Dapr",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/loan/wait/{{instanceId}}?timeoutSeconds=120",
+            "description": "Wait for workflow completion via Dapr"
+          }
+        },
+        {
+          "name": "4.4 Sample Application via Dapr",
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.instanceId) { pm.collectionVariables.set('instanceId', jsonData.instanceId); }"]}}],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/loan/sample",
+            "description": "Submit sample application via Dapr"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 5. LLM Testing (Direct API)",
+      "description": "Direct LLM interaction endpoints for testing Groq connection.",
+      "item": [
+        {
+          "name": "5.1 Test LLM Connection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/llm/test",
+            "description": "Verify Groq LLM is connected and responding.\nModel: llama-3.3-70b-versatile"
+          }
+        },
+        {
+          "name": "5.2 Chat with LLM",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"message\": \"What are the key factors for home loan approval in India?\"\n}"},
+            "url": "{{baseUrl}}/api/llm/chat",
+            "description": "Free-form chat with the LLM"
+          }
+        },
+        {
+          "name": "5.3 Ask About Loan Eligibility",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"message\": \"I earn 15 lakhs per year and want a 50 lakh home loan. Am I eligible?\"\n}"},
+            "url": "{{baseUrl}}/api/llm/chat",
+            "description": "Ask LLM about loan eligibility"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 6. LLM Testing (Via Dapr)",
+      "description": "LLM endpoints called through Dapr service invocation.",
+      "item": [
+        {
+          "name": "6.1 Test LLM via Dapr",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/llm/test",
+            "description": "Test LLM connection via Dapr"
+          }
+        },
+        {
+          "name": "6.2 Chat via Dapr",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"message\": \"Explain CIBIL score importance for home loans\"\n}"},
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/llm/chat",
+            "description": "Chat with LLM via Dapr"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 7. Health & Diagnostics (Direct API)",
+      "description": "Health check and diagnostic endpoints.",
+      "item": [
+        {
+          "name": "7.1 Spring Actuator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/actuator/health",
+            "description": "Spring Boot Actuator health check"
+          }
+        },
+        {
+          "name": "7.2 Autonomous Agent Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/autonomous/health",
+            "description": "Check autonomous agent status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 8. Health & Diagnostics (Via Dapr)",
+      "description": "Health and diagnostic endpoints via Dapr.",
+      "item": [
+        {
+          "name": "8.1 Dapr Sidecar Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/healthz",
+            "description": "Check Dapr sidecar health"
+          }
+        },
+        {
+          "name": "8.2 Dapr Metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/metadata",
+            "description": "Get Dapr sidecar metadata including app ID, components, subscriptions"
+          }
+        },
+        {
+          "name": "8.3 App Health via Dapr",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/actuator/health",
+            "description": "Spring Actuator health via Dapr"
+          }
+        },
+        {
+          "name": "8.4 Agent Health via Dapr",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{daprUrl}}/v1.0/invoke/{{appId}}/method/api/autonomous/health",
+            "description": "Autonomous agent health via Dapr"
+          }
+        }
       ]
     }
   ]

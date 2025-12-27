@@ -1,5 +1,7 @@
 package com.hdfcbank.standin.controller;
 
+import com.hdfcbank.standin.agents.autonomous.AgentDecision;
+import com.hdfcbank.standin.agents.autonomous.AutonomousLoanAgent;
 import com.hdfcbank.standin.model.LoanApplication;
 import com.hdfcbank.standin.model.WorkflowResult;
 import com.hdfcbank.standin.workflow.HomeLoanWorkflow;
@@ -28,11 +30,13 @@ public class LoanWorkflowController {
     
     private static final Logger log = LoggerFactory.getLogger(LoanWorkflowController.class);
     
-    private final DaprWorkflowClient workflowClient;
-    
-    public LoanWorkflowController() {
-        this.workflowClient = new DaprWorkflowClient();
-    }
+	    private final DaprWorkflowClient workflowClient;
+	    private final AutonomousLoanAgent autonomousLoanAgent;
+	    
+	    public LoanWorkflowController(AutonomousLoanAgent autonomousLoanAgent) {
+	        this.workflowClient = new DaprWorkflowClient();
+	        this.autonomousLoanAgent = autonomousLoanAgent;
+	    }
     
     /**
      * Submit a new loan application.
@@ -134,18 +138,65 @@ public class LoanWorkflowController {
         }
     }
     
-    /**
-     * Submit a sample loan application for testing.
-     * POST /api/loan/sample
-     */
-    @PostMapping("/sample")
-    public ResponseEntity<Map<String, Object>> submitSampleApplication() {
-        log.info("=== Submitting Sample Loan Application ===");
-        
-        LoanApplication sample = LoanApplication.createSample();
-        return applyForLoan(sample);
-    }
-    
+	    /**
+	     * Submit a sample loan application for testing.
+	     * POST /api/loan/sample
+	     */
+	    @PostMapping("/sample")
+	    public ResponseEntity<Map<String, Object>> submitSampleApplication() {
+	        log.info("=== Submitting Sample Loan Application ===");
+	        
+	        LoanApplication sample = LoanApplication.createSample();
+	        return applyForLoan(sample);
+	    }
+
+	    /**
+	     * Submit a loan application using the truly agentic LLM-powered processor.
+	     * POST /api/loan/apply/agentic
+	     */
+	    @PostMapping("/apply/agentic")
+	    public ResponseEntity<AgentDecision> applyForLoanAgentic(@RequestBody LoanApplication application) {
+	        log.info("=== New Agentic Loan Application Received ===");
+	        log.info("Applicant: {}", application.applicantName());
+	        log.info("Requested Amount: {}", application.requestedLoanAmount());
+
+	        try {
+	            String applicationId = application.applicationId() != null
+	                ? application.applicationId()
+	                : "LOAN-" + UUID.randomUUID().toString().substring(0, 8);
+
+	            LoanApplication appWithId = new LoanApplication(
+	                applicationId,
+	                application.applicantName(),
+	                application.panNumber(),
+	                application.aadhaarNumber(),
+	                application.annualIncome(),
+	                application.requestedLoanAmount(),
+	                application.loanTenureYears(),
+	                application.creditScore(),
+	                application.existingEmi(),
+	                application.employmentType(),
+	                application.employerName(),
+	                application.yearsOfExperience(),
+	                application.propertyType(),
+	                application.propertyValue(),
+	                application.propertyLocation()
+	            );
+
+	            AgentDecision decision = autonomousLoanAgent.processApplication(appWithId);
+	            log.info("0 Agentic decision: {} (Confidence: {}%)", decision.decision(), decision.confidenceScore());
+	            return ResponseEntity.ok(decision);
+	        } catch (Exception e) {
+	            log.error(" Agentic processing failed: {}", e.getMessage(), e);
+	            return ResponseEntity.internalServerError()
+	                .body(AgentDecision.manualReview(
+	                    application.applicationId() != null ? application.applicationId() : "UNKNOWN",
+	                    "Processing failed: " + e.getMessage(),
+	                    "Error occurred during agentic processing"
+	                ));
+	        }
+	    }
+     
     /**
      * Wait for workflow completion.
      * GET /api/loan/wait/{instanceId}

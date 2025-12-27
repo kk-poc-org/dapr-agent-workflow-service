@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Dapr Workflow Service - LLM Integration",
-    "description": "API collection for testing Dapr Workflow Service with Spring AI + Ollama LLM integration.\n\n## Prerequisites\n1. Ollama running with qwen2.5:3b model\n2. Dapr application running on port 8081\n3. Dapr sidecar running on port 3500\n\n## Start Application\n```\ndapr run --app-id dapr-workflow-service --app-port 8081 --dapr-http-port 3500 --components-path ./dapr/components --config ./dapr/config.yaml -- java --enable-preview -jar ./build/libs/dapr-agent-workflow-service.jar\n```",
+    "name": "Dapr Workflow Service - Legacy LLM Integration",
+    "description": "Legacy API collection for testing Dapr Workflow Service.\n\n**NOTE:** Use 'Dapr AI Loan Workflow - Complete API Collection' for the latest comprehensive collection.\n\n## Prerequisites\n1. Groq API key configured (or Ollama for local testing)\n2. Dapr application running on port 8081\n3. Dapr sidecar running on port 3500\n\n## Start Application\n```bash\ndapr run --app-id loan-agent-service --app-port 8081 --dapr-http-port 3500 --resources-path ./dapr/components -- .\\gradlew.bat bootRun\n```",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
