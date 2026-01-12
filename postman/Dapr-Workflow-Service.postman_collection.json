@@ -1,0 +1,194 @@
+{
+  "info": {
+    "name": "Dapr Workflow Service - LLM Integration",
+    "description": "API collection for testing Dapr Workflow Service with Spring AI + Ollama LLM integration.\n\n## Prerequisites\n1. Ollama running with qwen2.5:3b model\n2. Dapr application running on port 8081\n3. Dapr sidecar running on port 3500\n\n## Start Application\n```\ndapr run --app-id dapr-workflow-service --app-port 8081 --dapr-http-port 3500 --components-path ./dapr/components --config ./dapr/config.yaml -- java --enable-preview -jar ./build/libs/dapr-agent-workflow-service.jar\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "LLM Endpoints",
+      "item": [
+        {
+          "name": "Test LLM Connection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/llm/test",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "llm", "test"]
+            },
+            "description": "Test if Ollama LLM is connected and responding.\n\nExpected Response:\n```json\n{\n  \"status\": \"SUCCESS\",\n  \"model\": \"qwen2.5:3b\",\n  \"response\": \"Hello! Ollama is working!\"\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Document (AI Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicantName\": \"Rahul Sharma\",\n  \"documentType\": \"PAN Card\",\n  \"details\": \"ABCDE1234F, issued 2020\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/llm/verify-document",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "llm", "verify-document"]
+            },
+            "description": "AI Agent analyzes a document and returns verification result.\n\nExpected Response:\n```json\n{\n  \"status\": \"SUCCESS\",\n  \"model\": \"qwen2.5:3b\",\n  \"analysis\": \"... AI analysis with isValid, confidence, recommendation ...\"\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Document - Aadhaar Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicantName\": \"Priya Patel\",\n  \"documentType\": \"Aadhaar Card\",\n  \"details\": \"1234-5678-9012, Address: Mumbai, DOB: 1990-05-15\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/llm/verify-document",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "llm", "verify-document"]
+            },
+            "description": "Verify Aadhaar Card document using AI Agent."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Document - Income Proof",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicantName\": \"Amit Kumar\",\n  \"documentType\": \"Salary Slip\",\n  \"details\": \"Company: TCS, Monthly Salary: Rs. 85,000, Month: November 2024, Employee ID: TCS12345\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/llm/verify-document",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "llm", "verify-document"]
+            },
+            "description": "Verify Income Proof (Salary Slip) document using AI Agent."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dapr Sidecar Endpoints",
+      "item": [
+        {
+          "name": "Test LLM via Dapr Sidecar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3500/v1.0/invoke/dapr-workflow-service/method/api/llm/test",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3500",
+              "path": ["v1.0", "invoke", "dapr-workflow-service", "method", "api", "llm", "test"]
+            },
+            "description": "Test LLM connection via Dapr service invocation.\n\nThis calls the app through Dapr sidecar, enabling:\n- Service discovery\n- Retry policies\n- Observability"
+          },
+          "response": []
+        },
+        {
+          "name": "Dapr Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3500/v1.0/healthz",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3500",
+              "path": ["v1.0", "healthz"]
+            },
+            "description": "Check Dapr sidecar health status."
+          },
+          "response": []
+        },
+        {
+          "name": "Dapr Metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3500/v1.0/metadata",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3500",
+              "path": ["v1.0", "metadata"]
+            },
+            "description": "Get Dapr sidecar metadata including:\n- App ID\n- Active components\n- Subscriptions"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Spring Boot Actuator",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/actuator/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["actuator", "health"]
+            },
+            "description": "Spring Boot Actuator health check endpoint."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "app_port",
+      "value": "8081"
+    },
+    {
+      "key": "dapr_port",
+      "value": "3500"
+    },
+    {
+      "key": "app_id",
+      "value": "dapr-workflow-service"
+    }
+  ]
+}
+
