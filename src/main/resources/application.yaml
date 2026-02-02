@@ -1,3 +1,43 @@
 spring:
   application:
     name: dapr-workflow-spring
+
+  # Spring AI - Groq LLM Configuration
+  # Set GROQ_API_KEY environment variable with your API key from: https://console.groq.com/keys
+  ai:
+    openai:
+      api-key: ${GROQ_API_KEY:your-groq-api-key-here}
+      base-url: https://api.groq.com/openai
+      chat:
+        options:
+          model: llama-3.3-70b-versatile
+          temperature: 0.7
+
+# Dapr Configuration
+dapr:
+  workflow:
+    enabled: true
+  # Dapr sidecar connection settings
+  host: ${DAPR_HOST:localhost}
+  http:
+    port: ${DAPR_HTTP_PORT:3500}
+  grpc:
+    port: ${DAPR_GRPC_PORT:50001}
+
+# Agent Tools Configuration
+tools:
+  # Set to true to use Dapr Service Invocation for external API calls
+  # Set to false to use local mock implementations
+  use-dapr: ${TOOLS_USE_DAPR:true}
+
+# Server Configuration
+server:
+  port: 8081
+
+# Logging
+logging:
+  level:
+    org.springframework.ai: DEBUG
+    com.hdfcbank: DEBUG
+    # Enable Dapr service invocation logging
+    com.hdfcbank.standin.agents.tools.dapr: INFO

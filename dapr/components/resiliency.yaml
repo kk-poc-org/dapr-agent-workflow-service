@@ -1,0 +1,83 @@
+# Dapr Resiliency Configuration for Service Invocation
+# This provides retry, timeout, and circuit breaker policies for external service calls
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: loan-workflow-resiliency
+scopes:
+  - loan-workflow-service
+spec:
+  # Retry policies
+  policies:
+    retries:
+      # Retry policy for external validation services
+      externalServiceRetry:
+        policy: constant
+        duration: 1s
+        maxRetries: 3
+      
+      # More aggressive retry for critical services
+      criticalServiceRetry:
+        policy: exponential
+        maxInterval: 10s
+        maxRetries: 5
+    
+    # Timeout policies
+    timeouts:
+      # Standard timeout for validation services
+      validationTimeout: 30s
+      
+      # Longer timeout for credit bureau (can be slow)
+      creditBureauTimeout: 60s
+      
+      # Quick timeout for fraud checks
+      fraudCheckTimeout: 15s
+    
+    # Circuit breaker policies
+    circuitBreakers:
+      # Circuit breaker for external services
+      externalServiceCB:
+        maxRequests: 3
+        interval: 10s
+        timeout: 30s
+        trip: consecutiveFailures >= 5
+  
+  # Apply policies to specific targets
+  targets:
+    apps:
+      # PAN Validation Service
+      pan-validation-service:
+        retry: externalServiceRetry
+        timeout: validationTimeout
+        circuitBreaker: externalServiceCB
+      
+      # Aadhaar Validation Service
+      aadhaar-validation-service:
+        retry: externalServiceRetry
+        timeout: validationTimeout
+        circuitBreaker: externalServiceCB
+      
+      # Credit Bureau Service (longer timeout)
+      credit-bureau-service:
+        retry: criticalServiceRetry
+        timeout: creditBureauTimeout
+        circuitBreaker: externalServiceCB
+      
+      # Income Verification Service
+      income-verification-service:
+        retry: externalServiceRetry
+        timeout: validationTimeout
+        circuitBreaker: externalServiceCB
+      
+      # Fraud Detection Service (quick response needed)
+      fraud-detection-service:
+        retry: externalServiceRetry
+        timeout: fraudCheckTimeout
+        circuitBreaker: externalServiceCB
+      
+      # Property Valuation Service
+      property-valuation-service:
+        retry: externalServiceRetry
+        timeout: validationTimeout
+        circuitBreaker: externalServiceCB
+
